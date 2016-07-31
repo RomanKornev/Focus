@@ -22,11 +22,6 @@ AFK_IGNORE = ['youtube', 'twitch']  # windows containing any of these keywords w
 
 Window = namedtuple('Window', ['pid', 'name', 'start_time', 'last_update', 'focus_time', 'exe', 'cmd'])
 
-
-def hash(pid, name, time, segment):
-    return str(pid) + str(name) + str(time) + str(segment)
-
-
 def dump(data, file):
     try:
         if not os.path.exists(r'./logs/'):
@@ -101,7 +96,7 @@ if __name__ == '__main__':
         p = processes[pid]
         if not afk and AFK_EXE in p.exe():
             afk = pid
-        window = hash(pid, focus_title, p.create_time(), segment)
+        window = (str(pid), str(focus_title), str(p.create_time()), str(segment))
         now = dt.datetime.now()
         if window in windows:
             windows[window] = windows[window]._replace(focus_time=windows[window].focus_time + now - cur_time,
