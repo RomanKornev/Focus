@@ -23,7 +23,7 @@ The notebook looks like this:
 It categorizes every data point by ```window_name``` and ```exe``` using custom ```OrderedDict``` tables.
 
 Different plots are available:
-- ```plot_day_sequence_chart``` similar to Gantt chart but with top ```N``` categories (above picture).
+- ```plot_day_sequence_chart``` similar to [Gantt chart](https://en.wikipedia.org/wiki/Gantt_chart) but with top ```N``` categories (above picture).
 - ```plot_top_categories``` plots top ```N``` categories of all time.
 - ```plot_top_by_date``` same as above but splits each category by days.
 - ```plot_category_by_day``` plots one category usage each day.
