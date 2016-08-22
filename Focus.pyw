@@ -81,6 +81,8 @@ if __name__ == '__main__':
             processes[pid].exe()
         except ps.NoSuchProcess as e:
             logger.exception('\nps.NoSuchProcess, pid=%r, win=%r, title=%r', pid, win, focus_title, exc_info=True)
+            time.sleep(1)
+            continue
         except Exception as e:
             logger.exception('\nException, pid=%r, win=%r, title=%r', pid, win, focus_title, exc_info=True)
             time.sleep(1)
