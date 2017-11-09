@@ -16,7 +16,7 @@ It also filters any idle time into a different data group and has keywords that 
 If it lacks permissions or another error occurs, it will put window names with traceback in error log.
 
 ### Notebook
-The notebook looks like this:
+The notebook `Focus.ipynb` looks like this:
 
 ![Sequence](http://i.imgur.com/wXSw99w.png)
 
@@ -31,14 +31,30 @@ Different plots are available:
 
 ## Installation
 I recommend using [Anaconda](https://www.continuum.io/downloads)
-
+### For the polling script
 To install necessary components for the polling script:
 ```
-conda install pywin32 psutil ujson
+conda install psutil ujson
 ```
+#### Additiinal components
+
+If on Windows:
+```
+conda install pywin32
+```
+If on Linux:
+```
+sudo apt-get install xprintidle xdotool
+```
+#### Autostart
 To log windows every time computer starts, put link to the script in startup folder.
 
-For the notebook:
+Or on Linux: 
+```
+crontab -e
+@reboot /path/to/Focus.pyw
+```
+### For the notebook
 ```
 conda install pandas seaborn
 ```
