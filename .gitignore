@@ -1,3 +1,7 @@
+*.log
+categories_exe_filter.json
+categories_name_filter.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
