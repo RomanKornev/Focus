@@ -29,6 +29,7 @@ def load(file):
     return [Window(*v) for v in data]
 
 def load_data(last_n_days=30):
+    global data
     global categories_name, categories_exe
     # categorizes data points by window_name (first match)
     # format: ([list of window_names] , category) or (window_name , category)
@@ -72,6 +73,7 @@ def load_data(last_n_days=30):
     return data
 
 def reindex(colname):
+    global data
     data.index = data[colname]
     data.sort_index(inplace=True, ascending=False)
     return data
@@ -135,6 +137,7 @@ def top_categories_index(data, category_count):
     return total_category_time.sort_values(ascending=False)[:category_count].index
 
 def clip_start_date(date):
+    global data
     if date:
         # clip to minimum date in all dataset
         date = max(data.start_time.min(), pd.Timestamp(date))
@@ -144,6 +147,7 @@ def clip_start_date(date):
     return date
 
 def clip_end_date(date):
+    global data
     if date:
         # clip to maximum date in all dataset
         date = min(data.start_time.max(), pd.Timestamp(date))
@@ -153,6 +157,7 @@ def clip_end_date(date):
     return date
 
 def log_progress(sequence, every=None, size=None):
+    global data
     from ipywidgets import IntProgress, HTML, VBox
     from IPython.display import display
 
@@ -200,5 +205,3 @@ def log_progress(sequence, every=None, size=None):
         progress.bar_style = 'success'
         progress.value = index
         label.value = str(index or '?')
-
-data = load_data(365)
