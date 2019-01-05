@@ -19,7 +19,7 @@ AUTOSAVE_EVERY = 1000  # 1000*UPDATE_TIME
 AFK_TIME = 300  # seconds
 
 if 'linux' in sys.platform:
-    AFK_EXE = '/usr/bin/nautilus' # which process to use as idle process
+    AFK_EXE = 'compiz' # which process to use as idle process
 else:
     AFK_EXE = 'C:\\Windows\\explorer.exe'
 
@@ -85,6 +85,9 @@ if __name__ == '__main__':
     afk = None  # pid of afk process (when found)
     segment = 0
     prev_focus_title = None
+    win = None
+    pid = None
+    focus_title = None
 
     for i in itertools.count():
         try:
@@ -106,12 +109,16 @@ if __name__ == '__main__':
                 processes[pid] = ps.Process(pid)
             proc_data = get_process_data(processes[pid])
 
-        except ps.NoSuchProcess as e:
-            logger.exception('\nps.NoSuchProcess, pid=%r, win=%r, title=%r', pid, win, focus_title, exc_info=True)
+        except ps._exceptions.NoSuchProcess as e:
+            logger.exception('\nps.NoSuchProcess, pid=%r, win=%r, title=%r', 
+                             pid, win, focus_title, exc_info=True)
             time.sleep(1)
             continue
         except PermissionError:
             #logger.exception('\nPermissionError, pid=%r, win=%r, title=%r', pid, win, focus_title, exc_info=True)
+            time.sleep(1)
+            continue
+        except ps._exceptions.AccessDenied:
             time.sleep(1)
             continue
         except Exception as e:
@@ -154,4 +161,5 @@ if __name__ == '__main__':
         cur_time = now
         time.sleep(UPDATE_TIME)
         if i % AUTOSAVE_EVERY == 0:
+            logger.debug('saving...')
             dump(windows, './logs/{}.json.gz'.format(filename))
