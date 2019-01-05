@@ -1,14 +1,17 @@
-from collections import namedtuple
-import logging
-import itertools
-import psutil as ps
 import datetime as dt
-import time
-import os
-import ujson
 import gzip
+import itertools
+import logging
+import os
 import sys
-from subprocess import Popen, PIPE
+import time
+from collections import namedtuple
+from subprocess import PIPE, Popen
+
+import psutil as ps
+
+import ujson
+
 if 'win32' in sys.platform:
     import win32process
     import win32gui
@@ -19,15 +22,17 @@ AUTOSAVE_EVERY = 1000  # 1000*UPDATE_TIME
 AFK_TIME = 300  # seconds
 
 if 'linux' in sys.platform:
-    AFK_EXE = 'compiz' # which process to use as idle process
+    AFK_EXE = 'compiz'  # which process to use as idle process
 else:
     AFK_EXE = 'C:\\Windows\\explorer.exe'
 
 AFK_TITLE = 'AFK'
 # windows containing any of these keywords will not set idle timer
-AFK_IGNORE = list(map(str.lower,
-    ['youtube', 'twitch', 'Media Player Classic', '.mp4', '.mov', '.mpg', 
-     '.avi', '.mkv', 'VLC', 'stdin', '127.0.0.1']))
+AFK_IGNORE = list(
+    map(str.lower, [
+        'youtube', 'twitch', 'Media Player Classic', '.mp4', '.mov', '.mpg', '.avi', '.mkv', 'VLC',
+        'stdin', '127.0.0.1'
+    ]))
 
 Window = namedtuple('Window', 'pid name start_time last_update focus_time exe cmd')
 
@@ -55,8 +60,7 @@ def load(file):
 
 
 def exception_hook(exc_type, exc_value, exc_traceback):
-    logger.error('\nUncaught exception hooked:',
-                 exc_info=(exc_type, exc_value, exc_traceback))
+    logger.error('\nUncaught exception hooked:', exc_info=(exc_type, exc_value, exc_traceback))
 
 
 def logging_setup():
@@ -72,9 +76,8 @@ def logging_setup():
 
 
 def get_process_data(process):
-    return (process.create_time(),
-            process.exe(),
-            process.cmdline())
+    return (process.create_time(), process.exe(), process.cmdline())
+
 
 if __name__ == '__main__':
     logger = logging_setup()
@@ -92,13 +95,10 @@ if __name__ == '__main__':
     for i in itertools.count():
         try:
             if 'linux' in sys.platform:
-                win = Popen(['xdotool', 'getactivewindow'], 
-                            stdout=PIPE).communicate()[0]
+                win = Popen(['xdotool', 'getactivewindow'], stdout=PIPE).communicate()[0]
                 if not win: continue
-                pid = int(Popen(['xdotool', 'getwindowpid', win], 
-                                stdout=PIPE).communicate()[0])
-                focus_title = Popen(['xdotool', 'getwindowname', win], 
-                                    stdout=PIPE).communicate()[0]
+                pid = int(Popen(['xdotool', 'getwindowpid', win], stdout=PIPE).communicate()[0])
+                focus_title = Popen(['xdotool', 'getwindowname', win], stdout=PIPE).communicate()[0]
                 focus_title = str(focus_title[:-1].decode('utf-8'))
             else:
                 win = win32gui.GetForegroundWindow()
@@ -110,8 +110,12 @@ if __name__ == '__main__':
             proc_data = get_process_data(processes[pid])
 
         except ps._exceptions.NoSuchProcess as e:
-            logger.exception('\nps.NoSuchProcess, pid=%r, win=%r, title=%r', 
-                             pid, win, focus_title, exc_info=True)
+            logger.exception(
+                '\nps.NoSuchProcess, pid=%r, win=%r, title=%r',
+                pid,
+                win,
+                focus_title,
+                exc_info=True)
             time.sleep(1)
             continue
         except PermissionError:
@@ -122,17 +126,17 @@ if __name__ == '__main__':
             time.sleep(1)
             continue
         except Exception as e:
-            logger.exception('\nException, pid=%r, win=%r, title=%r', 
-                             pid, win, focus_title, exc_info=True)
+            logger.exception(
+                '\nException, pid=%r, win=%r, title=%r', pid, win, focus_title, exc_info=True)
             time.sleep(1)
             continue
 
         if 'linux' in sys.platform:
-            last_input_time = int(Popen(['xprintidle'], 
+            last_input_time = int(Popen(['xprintidle'],
                                         stdout=PIPE).communicate()[0])  # milliseconds
         else:
             last_input_time = win32api.GetTickCount() - win32api.GetLastInputInfo()
-        if last_input_time / 1000 > AFK_TIME and afk:
+        if last_input_time/1000 > AFK_TIME and afk:
             if not any(keyword in focus_title.lower() for keyword in AFK_IGNORE):
                 # AFK mode started
                 pid = afk
@@ -148,16 +152,11 @@ if __name__ == '__main__':
         now = dt.datetime.now()
         if window in windows:
             new_focus_time = windows[window].focus_time + now - cur_time
-            windows[window] = windows[window]._replace(focus_time=new_focus_time,
-                                                       last_update=str(now))
+            windows[window] = windows[window]._replace(
+                focus_time=new_focus_time, last_update=str(now))
         else:
-            windows[window] = Window(pid,
-                                     focus_title,
-                                     str(dt.datetime.fromtimestamp(proc_data[0])),
-                                     str(now),
-                                     now - cur_time,
-                                     proc_data[1],
-                                     ' '.join(proc_data[2]))
+            windows[window] = Window(pid, focus_title, str(dt.datetime.fromtimestamp(proc_data[0])),
+                                     str(now), now - cur_time, proc_data[1], ' '.join(proc_data[2]))
         cur_time = now
         time.sleep(UPDATE_TIME)
         if i % AUTOSAVE_EVERY == 0:

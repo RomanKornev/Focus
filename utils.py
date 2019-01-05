@@ -1,20 +1,23 @@
-import pandas as pd
-from collections import namedtuple, OrderedDict
 import datetime
-import ujson
-import os
-import numpy as np
-from datetime import datetime as dt
-import matplotlib.pyplot as plt
-import math
-import time
 import gzip
+import math
+import os
+import time
+from collections import OrderedDict, namedtuple
+from datetime import datetime as dt
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+import ujson
 
 LOGS = './logs/'
 Window = namedtuple('Window', 'pid name start_time last_update focus_time exe cmd')
 Event = namedtuple('Event', 'time category text index')
 
 CUTOFF = 20*1e6/60  # display categories with at least 20 minutes total focus time
+
 
 def load(file):
     try:
@@ -27,6 +30,7 @@ def load(file):
     except:
         print(f'Error loading file: {file}')
     return [Window(*v) for v in data]
+
 
 def load_data(last_n_days=30):
     global data
@@ -41,10 +45,9 @@ def load_data(last_n_days=30):
     with open('categories_exe_filter.json', 'r', encoding='utf-8') as f:
         categories_exe = OrderedDict(expand_multi_dict(ujson.load(f)))
 
-
-    files = {file : os.path.getctime(os.path.join(LOGS, file)) for file in os.listdir(LOGS)}
-    split_date = (dt.fromtimestamp(files[sorted(files.keys())[-1]])
-                  - pd.Timedelta(str(last_n_days) + 'days')).date()
+    files = {file: os.path.getctime(os.path.join(LOGS, file)) for file in os.listdir(LOGS)}
+    split_date = (dt.fromtimestamp(files[sorted(files.keys())[-1]]) -
+                  pd.Timedelta(str(last_n_days) + 'days')).date()
     data = None
     days = []
 
@@ -56,15 +59,16 @@ def load_data(last_n_days=30):
             days.append(day)
 
     data = pd.concat([*days])
-    data['start_time'] = data['start_time'].apply(lambda x : pd.Timestamp(x))
-    data['last_update'] = data['last_update'].apply(lambda x : pd.Timestamp(x))
-    data['focus_time'] = data['focus_time'].apply(lambda x : pd.Timedelta(x))
+    data['start_time'] = data['start_time'].apply(lambda x: pd.Timestamp(x))
+    data['last_update'] = data['last_update'].apply(lambda x: pd.Timestamp(x))
+    data['focus_time'] = data['focus_time'].apply(lambda x: pd.Timedelta(x))
     data['start_time'] = data['last_update'] - data['focus_time']
 
     if data is not None:
-        data['category'] = merge(data['name'].apply(lambda x: categorize(x, categories_name)).values,
-                                 data['exe'].apply(lambda x: categorize(x, categories_exe)).values,
-                                 data['exe'].str.split('\\').apply(lambda x: x[-1]).values)
+        data['category'] = merge(
+            data['name'].apply(lambda x: categorize(x, categories_name)).values,
+            data['exe'].apply(lambda x: categorize(x, categories_exe)).values,
+            data['exe'].str.split('\\').apply(lambda x: x[-1]).values)
 
     #delete unused columns
     del data['pid']
@@ -72,11 +76,13 @@ def load_data(last_n_days=30):
     del data['cmd']
     return data
 
+
 def reindex(colname):
     global data
     data.index = data[colname]
     data.sort_index(inplace=True, ascending=False)
     return data
+
 
 def expand_multi_dict(key_val_pair):
     ret = []
@@ -88,10 +94,12 @@ def expand_multi_dict(key_val_pair):
                 ret.append((sub_item, item[1]))
     return ret
 
+
 def categorize(x, dictionary):
     for k, v in dictionary.items():
         if k.lower() in x.lower():
             return v
+
 
 def merge(*lists):
     ret = lists[0]
@@ -104,17 +112,22 @@ def merge(*lists):
                 break
     return ret
 
+
 def time_ticks(x, pos):
     return str(datetime.timedelta(milliseconds=x*3.6))
+
 
 def label_ticks(y, pos):
     return sequence_categories[int(round(y))]
 
+
 def date_boot_ticks(x, pos):
     return (boot_time_round + datetime.timedelta(milliseconds=x*3.6)).strftime("%Y-%m-%d %H:%M:%S")
 
+
 def timedelta_to_ms_hr(td):
-    return td / np.timedelta64(1,'ms') / 3.6
+    return td/np.timedelta64(1, 'ms')/3.6
+
 
 def reindex_by_sum(data):
     data['sum'] = data.sum(1)
@@ -122,19 +135,24 @@ def reindex_by_sum(data):
     del data['sum']
     return data
 
+
 def total_time_by_category_boot(data):
     d = data.groupby(['category', 'boot'])['focus_time'].sum().apply(timedelta_to_ms_hr)
     d = d.sort_values(ascending=False).unstack(level=1)
     return d
 
+
 def total_time_by_category_day(data):  # SLOW
-    d = data.set_index('start_time').groupby('category')['focus_time'].resample('D').sum().apply(timedelta_to_ms_hr)
+    d = data.set_index('start_time').groupby('category')['focus_time'].resample('D').sum().apply(
+        timedelta_to_ms_hr)
     d = d.sort_values(ascending=False).unstack(level=1)
     return d
+
 
 def top_categories_index(data, category_count):
     total_category_time = data.groupby('category')['focus_time'].sum()
     return total_category_time.sort_values(ascending=False)[:category_count].index
+
 
 def clip_start_date(date):
     global data
@@ -146,6 +164,7 @@ def clip_start_date(date):
         date = pd.Timestamp.now() - pd.Timedelta('31 days')
     return date
 
+
 def clip_end_date(date):
     global data
     if date:
@@ -155,6 +174,7 @@ def clip_end_date(date):
         # default to today
         date = pd.Timestamp('today')
     return date
+
 
 def log_progress(sequence, every=None, size=None):
     global data
@@ -172,7 +192,7 @@ def log_progress(sequence, every=None, size=None):
             if size <= 200:
                 every = 1
             else:
-                every = size / 200     # every 0.5%
+                every = size/200  # every 0.5%
     else:
         assert every is not None, 'sequence is iterator, set every'
 
@@ -193,10 +213,7 @@ def log_progress(sequence, every=None, size=None):
                     label.value = '{index} / ?'.format(index=index)
                 else:
                     progress.value = index
-                    label.value = u'{index} / {size}'.format(
-                        index=index,
-                        size=size
-                    )
+                    label.value = u'{index} / {size}'.format(index=index, size=size)
             yield record
     except:
         progress.bar_style = 'danger'
