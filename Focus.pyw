@@ -26,9 +26,10 @@ else:
 AFK_TITLE = 'AFK'
 # windows containing any of these keywords will not set idle timer
 AFK_IGNORE = list(map(str.lower,
-    ['youtube', 'twitch', 'Media Player Classic', '.mp4', '.mov', '.mpg', '.avi', '.mkv', 'VLC', 'stdin', '127.0.0.1']))
+    ['youtube', 'twitch', 'Media Player Classic', '.mp4', '.mov', '.mpg', 
+     '.avi', '.mkv', 'VLC', 'stdin', '127.0.0.1']))
 
-Window = namedtuple('Window', ['pid', 'name', 'start_time', 'last_update', 'focus_time', 'exe', 'cmd'])
+Window = namedtuple('Window', 'pid name start_time last_update focus_time exe cmd')
 
 
 def dump(data, file):
@@ -88,10 +89,13 @@ if __name__ == '__main__':
     for i in itertools.count():
         try:
             if 'linux' in sys.platform:
-                win = int(Popen(['xdotool', 'getactivewindow'], stdout=PIPE).communicate()[0])
+                win = Popen(['xdotool', 'getactivewindow'], 
+                            stdout=PIPE).communicate()[0]
                 if not win: continue
-                pid = int(Popen(['xdotool', 'getwindowpid', str(win)], stdout=PIPE).communicate()[0])
-                focus_title = Popen(['xdotool', 'getwindowname', str(win)], stdout=PIPE).communicate()[0]
+                pid = int(Popen(['xdotool', 'getwindowpid', win], 
+                                stdout=PIPE).communicate()[0])
+                focus_title = Popen(['xdotool', 'getwindowname', win], 
+                                    stdout=PIPE).communicate()[0]
                 focus_title = str(focus_title[:-1].decode('utf-8'))
             else:
                 win = win32gui.GetForegroundWindow()
@@ -111,12 +115,14 @@ if __name__ == '__main__':
             time.sleep(1)
             continue
         except Exception as e:
-            logger.exception('\nException, pid=%r, win=%r, title=%r', pid, win, focus_title, exc_info=True)
+            logger.exception('\nException, pid=%r, win=%r, title=%r', 
+                             pid, win, focus_title, exc_info=True)
             time.sleep(1)
             continue
 
         if 'linux' in sys.platform:
-            last_input_time = int(Popen(['xprintidle'], stdout=PIPE).communicate()[0])  # milliseconds
+            last_input_time = int(Popen(['xprintidle'], 
+                                        stdout=PIPE).communicate()[0])  # milliseconds
         else:
             last_input_time = win32api.GetTickCount() - win32api.GetLastInputInfo()
         if last_input_time / 1000 > AFK_TIME and afk:
@@ -134,7 +140,8 @@ if __name__ == '__main__':
         window = (str(pid), str(focus_title), str(proc_data[0]), str(segment))
         now = dt.datetime.now()
         if window in windows:
-            windows[window] = windows[window]._replace(focus_time=windows[window].focus_time + now - cur_time,
+            new_focus_time = windows[window].focus_time + now - cur_time
+            windows[window] = windows[window]._replace(focus_time=new_focus_time,
                                                        last_update=str(now))
         else:
             windows[window] = Window(pid,
