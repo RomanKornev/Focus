@@ -12,6 +12,7 @@ icon/
 *.stat
 *.pkl
 *.log
+*.todo
 
 # Monkeytype
 monkeytype.sqlite3
