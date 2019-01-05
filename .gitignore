@@ -1,6 +1,37 @@
-*.log
+### Specific
 categories_exe_filter.json
 categories_name_filter.json
+
+### Generic
+pixiedust/
+data/
+sound/
+wtf/
+icon/
+
+*.stat
+*.pkl
+*.log
+
+# Monkeytype
+monkeytype.sqlite3
+
+# YAPF
+.style.yapf
+
+# BFG
+bfg-*.jar
+.git.bfg-report/
+
+# Cache
+.idea/
+.ipynb_checkpoints/
+.mypy_cache/
+.pytest_cache/
+.vscode/
+
+# Krita autosave
+*-autosave.kra
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
