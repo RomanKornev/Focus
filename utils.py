@@ -19,7 +19,6 @@ Event = namedtuple('Event', 'time category text index')
 
 CUTOFF = 20*1e6/60  # display categories with at least 20 minutes total focus time
 
-data = None
 # categorizes data points by window_name (first match)
 # format: ([list of window_names] , category) or (window_name , category)
 categories_name = load_filter('categories_name_filter.json')
