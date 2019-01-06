@@ -17,14 +17,14 @@ LOGS = './logs/'
 Window = namedtuple('Window', 'pid name start_time last_update focus_time exe cmd')
 Event = namedtuple('Event', 'time category text index')
 
-CUTOFF = 20*1e6/60  # display categories with at least 20 minutes total focus time
+CUTOFF = 20*1e6/60  # Display categories with at least 20 minutes total focus time
 
-# categorizes data points by window_name (first match)
-# format: ([list of window_names] , category) or (window_name , category)
+# Categorizes data points by window_name (first match)
+# Format: ([list of window_names] , category) or (window_name , category)
 categories_name = load_filter('categories_name_filter.json')
 
-# categorizes data points by exe_path
-# format: ([list of exe_paths] , category) or (exe_path , category)
+# Categorizes data points by exe_path
+# Format: ([list of exe_paths] , category) or (exe_path , category)
 categories_exe = load_filter('categories_exe_filter.json')
 
 
@@ -72,10 +72,9 @@ def load_data(last_n_days=30):
             data['exe'].apply(lambda x: categorize(x, categories_exe)).values,
             data['exe'].str.split('\\').apply(lambda x: x[-1]).values)
 
-    #delete unused columns
+    # Delete unused columns
     del data['pid']
     del data['exe']
-    # del data['cmd']
     return data
 
 
@@ -151,19 +150,19 @@ def top_categories_index(data, category_count):
 
 def clip_start_date(date, data):
     if date:
-        # clip to minimum date in all dataset
+        # Clip to minimum date in all dataset
         date = max(data.start_time.min(), pd.Timestamp(date))
     else:
-        # default to recent month
+        # Default to recent month
         date = pd.Timestamp.now() - pd.Timedelta('31 days')
     return date
 
 
 def clip_end_date(date, data):
     if date:
-        # clip to maximum date in all dataset
+        # Clip to maximum date in all dataset
         date = min(data.start_time.max(), pd.Timestamp(date))
     else:
-        # default to today
+        # Default to today
         date = pd.Timestamp('today')
     return date
