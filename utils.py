@@ -19,6 +19,10 @@ Event = namedtuple('Event', 'time category text index')
 
 CUTOFF = 20*1e6/60  # display categories with at least 20 minutes total focus time
 
+data = None
+categories_name = None
+categories_exe = None
+
 
 def load(file):
     try:
