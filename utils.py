@@ -20,11 +20,22 @@ Event = namedtuple('Event', 'time category text index')
 CUTOFF = 20*1e6/60  # display categories with at least 20 minutes total focus time
 
 data = None
-categories_name = None
-categories_exe = None
+# categorizes data points by window_name (first match)
+# format: ([list of window_names] , category) or (window_name , category)
+categories_name = load_filter('categories_name_filter.json')
+
+# categorizes data points by exe_path
+# format: ([list of exe_paths] , category) or (exe_path , category)
+categories_exe = load_filter('categories_exe_filter.json')
 
 
-def load(file):
+def load_filter(filename):
+    with open(filename, 'r', encoding='utf-8') as f:
+        data = OrderedDict(expand_multi_dict(ujson.load(f)))
+    return data
+
+
+def load_gz(file):
     try:
         if file.split('.')[-1] == 'gz':
             with gzip.open(file) as f:
@@ -38,18 +49,6 @@ def load(file):
 
 
 def load_data(last_n_days=30):
-    global data
-    global categories_name, categories_exe
-    # categorizes data points by window_name (first match)
-    # format: ([list of window_names] , category) or (window_name , category)
-    with open('categories_name_filter.json', 'r', encoding='utf-8') as f:
-        categories_name = OrderedDict(expand_multi_dict(ujson.load(f)))
-
-    # categorizes data points by exe_path
-    # format: ([list of exe_paths] , category) or (exe_path , category)
-    with open('categories_exe_filter.json', 'r', encoding='utf-8') as f:
-        categories_exe = OrderedDict(expand_multi_dict(ujson.load(f)))
-
     files = {file: os.path.getctime(os.path.join(LOGS, file)) for file in os.listdir(LOGS)}
     split_date = (dt.fromtimestamp(files[sorted(files.keys())[-1]]) -
                   pd.Timedelta(str(last_n_days) + 'days')).date()
@@ -57,7 +56,7 @@ def load_data(last_n_days=30):
     days = []
     for file in tqdm_notebook(files):
         if dt.fromtimestamp(files[file]).date() > split_date:
-            day = load(os.path.join(LOGS, file))
+            day = load_gz(os.path.join(LOGS, file))
             day = pd.DataFrame.from_records(day, columns=Window._fields)
             day['boot'] = pd.Timestamp(day['start_time'].min())
             days.append(day)
@@ -78,13 +77,6 @@ def load_data(last_n_days=30):
     del data['pid']
     del data['exe']
     # del data['cmd']
-    return data
-
-
-def reindex(colname):
-    global data
-    data.index = data[colname]
-    data.sort_index(inplace=True, ascending=False)
     return data
 
 
