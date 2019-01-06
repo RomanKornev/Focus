@@ -9,6 +9,7 @@ from datetime import datetime as dt
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from tqdm import tqdm_notebook
 
 import ujson
 
@@ -50,8 +51,7 @@ def load_data(last_n_days=30):
                   pd.Timedelta(str(last_n_days) + 'days')).date()
     data = None
     days = []
-
-    for file in log_progress(files, every=1):
+    for file in tqdm_notebook(files):
         if dt.fromtimestamp(files[file]).date() > split_date:
             day = load(os.path.join(LOGS, file))
             day = pd.DataFrame.from_records(day, columns=Window._fields)
@@ -73,7 +73,7 @@ def load_data(last_n_days=30):
     #delete unused columns
     del data['pid']
     del data['exe']
-    del data['cmd']
+    # del data['cmd']
     return data
 
 
@@ -154,8 +154,7 @@ def top_categories_index(data, category_count):
     return total_category_time.sort_values(ascending=False)[:category_count].index
 
 
-def clip_start_date(date):
-    global data
+def clip_start_date(date, data):
     if date:
         # clip to minimum date in all dataset
         date = max(data.start_time.min(), pd.Timestamp(date))
@@ -165,8 +164,7 @@ def clip_start_date(date):
     return date
 
 
-def clip_end_date(date):
-    global data
+def clip_end_date(date, data):
     if date:
         # clip to maximum date in all dataset
         date = min(data.start_time.max(), pd.Timestamp(date))
@@ -174,51 +172,3 @@ def clip_end_date(date):
         # default to today
         date = pd.Timestamp('today')
     return date
-
-
-def log_progress(sequence, every=None, size=None):
-    global data
-    from ipywidgets import IntProgress, HTML, VBox
-    from IPython.display import display
-
-    is_iterator = False
-    if size is None:
-        try:
-            size = len(sequence)
-        except TypeError:
-            is_iterator = True
-    if size is not None:
-        if every is None:
-            if size <= 200:
-                every = 1
-            else:
-                every = size/200  # every 0.5%
-    else:
-        assert every is not None, 'sequence is iterator, set every'
-
-    if is_iterator:
-        progress = IntProgress(min=0, max=1, value=1)
-        progress.bar_style = 'info'
-    else:
-        progress = IntProgress(min=0, max=size, value=0)
-    label = HTML()
-    box = VBox(children=[label, progress])
-    display(box)
-
-    index = 0
-    try:
-        for index, record in enumerate(sequence, 1):
-            if index == 1 or index % every == 0:
-                if is_iterator:
-                    label.value = '{index} / ?'.format(index=index)
-                else:
-                    progress.value = index
-                    label.value = u'{index} / {size}'.format(index=index, size=size)
-            yield record
-    except:
-        progress.bar_style = 'danger'
-        raise
-    else:
-        progress.bar_style = 'success'
-        progress.value = index
-        label.value = str(index or '?')
