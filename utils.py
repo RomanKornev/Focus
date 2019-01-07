@@ -177,8 +177,9 @@ def total_time_by_category_day(data):  # SLOW
 
 
 def top_categories_index(data, category_count):
-    total_category_time = data.groupby('category')['focus_time'].sum()
-    return total_category_time.sort_values(ascending=False)[:category_count].index
+    d = data.groupby('category')['focus_time'].sum()  # Total time per category
+    d = d.sort_values(ascending=False)[:category_count].index
+    return d
 
 
 def clip_start_date(date, data):
