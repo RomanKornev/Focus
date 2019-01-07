@@ -169,13 +169,6 @@ def total_time_by_category_boot(data):
     return d
 
 
-def total_time_by_category_day(data):  # SLOW
-    d = data.set_index('start_time').groupby('category')['focus_time'].resample('D').sum().apply(
-        timedelta_to_ms_hr)
-    d = d.sort_values(ascending=False).unstack(level=1)
-    return d
-
-
 def top_categories_index(data, category_count):
     d = data.groupby('category')['focus_time'].sum()  # Total time per category
     d = d.sort_values(ascending=False)[:category_count].index
