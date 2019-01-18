@@ -23,7 +23,7 @@ DAY = pd.Timedelta('1 day')
 HOUR = pd.Timedelta('1 hour')
 MINUTE = pd.Timedelta('1 minute')
 
-MIN_TIME_PER_CATEGORY = 20*MINUTE  # Display categories with at least 20 minutes total focus time
+MIN_TIME_PER_CATEGORY = '20 minutes'  # Display categories with at least 20 minutes total focus time
 
 
 def load_filter(filename):
@@ -99,7 +99,7 @@ def load_data(last_n_days=30):
 
     # Delete unused columns
     del data['pid']
-    del data['exe']
+    del data['cmd']
     return data
 
 
@@ -129,12 +129,30 @@ def bound_data(data, start_date, end_date):
     end_date = clip_end_date(end_date, data)
     data_bounded = data[(data.start_time > pd.Timestamp(start_date)) &
                         (data.start_time <= pd.Timestamp(end_date))]
-    assert not data_bounded.empty
+    assert not data_bounded.empty, 'Data is empty'
     return data_bounded, start_date, end_date
 
 
 def filter_data(data, ignored_categories):
     return data[~data.category.isin(map(str.lower, ignored_categories))]
+
+
+def cut_categories(data, category_count=None, total_column=slice(None)):
+    if category_count:
+        data = data[:category_count]
+    else:
+        data = data[data[total_column] > MIN_TIME_PER_CATEGORY]
+    return data
+
+
+# TODO: include columns
+def redact(plot_data, anonymize, reverse=False):
+    linspace = range(len(plot_data))
+    if reverse:
+        linspace = linspace[::-1]
+    if anonymize:
+        plot_data.index = [f'REDACTED_{i:02}' for i in linspace]
+    return plot_data
 
 
 def reindex_by_total_time_cut(data, category_count):
@@ -146,26 +164,24 @@ def reindex_by_total_time_cut(data, category_count):
     return data
 
 
-def cut_categories(data, category_count, total_column=slice(None)):
-    if category_count:
-        data = data[:category_count]
-    else:
-        data = data[data[total_column] > MIN_TIME_PER_CATEGORY]
-    return data
+def resample_total_time_by_day(data):
+    d = data.set_index('start_time')['focus_time'].resample('D').sum()
+    return d
 
 
-def redact(plot_data, anonymize, reverse=False):
-    linspace = range(len(plot_data))
-    if reverse:
-        linspace = linspace[::-1]
-    if anonymize:
-        plot_data.index = [f'REDACTED_{i:02}' for i in linspace]
-    return plot_data
+def groupby_columns_total_time(data, columns):
+    d = data.groupby(columns)['focus_time'].sum().sort_values(ascending=False)
+    return d
 
 
-def total_time_by_category_boot(data):
-    d = data.groupby(['category', 'boot'])['focus_time'].sum()
-    d = d.sort_values(ascending=False).unstack(level=1)
+def top_categories(data, category_count=None):
+    d = data.groupby('category')['focus_time'].sum().sort_values(ascending=False)
+    d = cut_categories(d, category_count)
+    return d
+
+
+def groupby_columns_total_time_unstack(data, columns):
+    d = groupby_columns_total_time(data, columns).unstack(level=1)
     return d
 
 
