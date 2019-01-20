@@ -18,7 +18,7 @@ If it lacks permissions or another error occurs, it will put window names with t
 ### Notebook
 The notebook `Focus.ipynb` looks like this:
 
-![Sequence](http://i.imgur.com/wXSw99w.png)
+![Sequence](https://user-images.githubusercontent.com/5807561/51444553-01e25780-1d0a-11e9-944b-aac96b62d221.png)
 
 It categorizes every data point by ```window_name``` and ```exe``` using custom ```OrderedDict``` tables.
 
