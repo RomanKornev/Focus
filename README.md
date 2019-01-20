@@ -47,12 +47,13 @@ If on Linux:
 sudo apt-get install xprintidle xdotool
 ```
 #### Autostart
-To log windows every time computer starts, put link to the script in startup folder.
+##### Windows
+To run the logging script on startup, put a shortcut of the script `focus_bg.pyw` into `C:\Users\USERNAME\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\` .
 
-Or on Linux: 
+##### Linux: 
 ```
 crontab -e
-@reboot /path/to/Focus.pyw
+@reboot python /path/to/focus_bg.pyw
 ```
 ### For the notebook
 ```
