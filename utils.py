@@ -1,10 +1,10 @@
-import datetime
 import gzip
 import math
 import os
 import time
 from collections import OrderedDict, namedtuple
 from datetime import datetime as dt
+from datetime import timedelta
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,12 +18,13 @@ Window = namedtuple('Window', 'pid name start_time last_update focus_time exe cm
 Event = namedtuple('Event', 'time category text index')
 
 SEC_PER_HOUR = 60*60
-MS_HOUR_FORMAT = SEC_PER_HOUR/10**3
+HOUR_FORMAT = SEC_PER_HOUR/10**3
 DAY = pd.Timedelta('1 day')
 HOUR = pd.Timedelta('1 hour')
 MINUTE = pd.Timedelta('1 minute')
 
 MIN_TIME_PER_CATEGORY = '20 minutes'  # Display categories with at least 20 minutes total focus time
+ORIGIN_TIME = pd.Timestamp('2019-01-01')  # Used to plot timedelta
 
 
 def load_filter(filename):
@@ -104,24 +105,19 @@ def load_data(last_n_days=30):
 
 
 def time_ticks(x, pos):
-    return str(datetime.timedelta(milliseconds=x*MS_HOUR_FORMAT))
+    return str(timedelta(milliseconds=x*HOUR_FORMAT))
 
 
-def label_ticks(y, pos):
-    return sequence_categories[int(round(y))]
-
-
-def date_boot_ticks(x, pos):
-    return (boot_time_round +
-            datetime.timedelta(milliseconds=x*MS_HOUR_FORMAT)).strftime("%Y-%m-%d %H:%M:%S")
+def date_offset_ticks(x, pos):
+    return (ORIGIN_TIME + timedelta(milliseconds=x*HOUR_FORMAT)).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def total_days(data):
     return (data.start_time.max() - data.start_time.min())/DAY
 
 
-def timedelta_to_ms_hr(td):
-    return td/np.timedelta64(1, 'ms')/MS_HOUR_FORMAT
+def timedelta_format(td):
+    return td/timedelta(milliseconds=1*HOUR_FORMAT)
 
 
 def bound_data(data, start_date, end_date):
